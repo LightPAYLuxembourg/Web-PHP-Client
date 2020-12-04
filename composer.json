@@ -1,0 +1,19 @@
+{
+    "name": "kefahbader/lightpay-client-wep-api",
+    "description": "A client to generate LightPAY Qr-code payment for web services",
+    "authors": [
+        {
+            "name": "Kefah Bader",
+            "email": "kefah.bader@lightpay.lu"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "LightPAY\\Framework\\": "./src/Framework"
+        }
+    },
+    "require": {
+      "ext-json": "*",
+      "ext-openssl": "*"
+    }
+}
