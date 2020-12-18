@@ -6,34 +6,35 @@ require dirname(__DIR__) . "/vendor/autoload.php";
 
 try {
     $request = new Request(
-        "abcbcbc333f7b31ca751d88db3e760874d0cf7803cf5cd8b24d6a6d5051b4efab4eecab",
-        "a8dc8a5665d3ac143e6fff431a8dc8a5665d3ac143e6fff431a8dc8a5665d3ac143e6fff431",
-        "838a74e940e5cac62b90214829e42e9a0e6ea0338d91eb8a9ae29b788d4bb",
-        "http://localhost:9001/response.php",
-        "http://localhost:9001/response.php"
+        "__API_KEY__",
+        "__CONSUMER_KEY__",
+        "__SECRET_KEY__"
     );
-    
-    $amount = 40;
 
-    $res = $request->post("/v1/web/api/payments/cancels", [
-        'trx_id' => "trx-5e15c21d4631f-1578484253"
-    ]);
-    var_dump($res);
-    die();
-    $nb = new NumberFormatter("fr_FR", NumberFormatter::CURRENCY);
-    $amountView = $nb->format($amount / 100);
+    // INIT PAYMENT
+    $amount = 100;
     $data = $request->post("/v1/web/api/payments/init", [
         'amount' => $amount,
-        'ref' => "5lzRlKO2Rp3AJtSsByUe6JyfnYOPJ84TA7LO9mXT0hknhVqQDATuxgY7baWD3SoF4Iw6r4IPEXpliUTZYnXqqKKL3rNh8PWgdKqA6b9YPLbDEsUvN9zqiF6BjjrztnWN7xqpDxk5nsAeMTJbAQYZPlmrZEVsjxnYzMixNzRmWjzkOlYdmch0AJBmleaFQVBL5xKT4iGKO06AI3cfwm6hmfMiWZk8OVUMDoqEByJXaHQXYa1KzZg0sAUTEF8tJ1F",
-        "merchant_id" => "a8dc8a5665d3ac143e6fff431a8dc8a5665d3ac143e6fff431a8dc8a5665d3ac143e6fff431",
-        "custom_fields" => "foo=bar;barfoo=foot"
+        'ref' => "SOME_REF",
+        "merchant_id" => "__CONSUMER_KEY__",
+        "custom_fields" => "foo=hello;foobar=world"
     ]);
-    /*
-    $res = $request->get("/v1/web/api/payments/response", [
-        'foo' => 'bar',
-        'baz' => ['hi', 'there!']
-    ]);
-    */
+
+    /**
+     * SIMULATE A DEVICE PAYMENT
+     * This will trigger the payment with the received token
+     * and send the response to you response url
+     */
+    if($data->token) {
+        $res = $request->post("/v1/requests/pay/simulate", [
+            'payment_token' => $data->token,
+        ]);
+        var_dump($res);
+    }
+
+    $nb = new NumberFormatter("fr_FR", NumberFormatter::CURRENCY);
+    $amountView = $nb->format($amount / 100);
+
 } catch (Exception $e) {
     error_log($e->getMessage());
 }
@@ -147,9 +148,6 @@ try {
             setTimeout(async () => {
                 $("#copy").popover('show');
                 await navigator.clipboard.writeText(text);
-                setTimeout(() => {
-                    window.location.replace("https://apps.apple.com/app/apple-store/id1463962129")
-                }, 1000)
             }, 500)
 
             setTimeout(() => {
@@ -162,38 +160,6 @@ try {
             console.error("Copy failed", error);
         }
     });
-
-    const device = {
-        ua: navigator.userAgent,
-        type: () => {
-            console.log(this.ua)
-            if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(device.ua)) {
-                return "tablet";
-            }
-            if (
-                /Mobile|iP(hone|od|ad)|Android|BlackBerry|IEMobile|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(
-                    this.ua
-                )
-            ) {
-                return "mobile";
-            }
-            return "desktop";
-        },
-        isAndroid: () => {
-            if (/Android/.test(device.ua)) {
-                return true;
-            }
-            return false
-        },
-        isIOS: () => {
-            console.log(navigator.userAgent)
-            if (/iPhone/.test(device.ua)) {
-                return true;
-            }
-            return false
-        }
-    };
-    console.log(device.isIOS())
 </script>
 </body>
 </html>

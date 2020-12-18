@@ -13,10 +13,10 @@ class Request
     /**
      * @var string
      */
-    //public $endpoint = "https://demo.lunch-digi-pay.lu";
-    //public $testEndpoint = "https://webdemo.lunch-digi-pay.lu";
-    public $endpoint = "http://localhost:9004";
-    public $testEndpoint = "http://localhost:9004";
+    public $endpoint = "https://web.lunch-digi-pay.lu";
+    public $testEndpoint = "https://webdemo.lunch-digi-pay.lu";
+    //public $endpoint = "http://localhost:9004";
+    //public $testEndpoint = "http://localhost:9004";
 
     /**
      * @var Client
@@ -48,29 +48,17 @@ class Request
 
 
     public $debug = null;
-    /**
-     * @var string
-     */
-
-    private $successUrl;
-
-    /**
-     * @var string
-     */
-    private $errorUrl;
 
     public function __construct(
-        string $api_key,
         string $consumer_key,
+        string $api_key,
         string $secret_key,
-        string $successUrl,
-        string $errorUrl,
         string $mode = "test",
         array $config = []
     )
     {
         $config['base_uri'] = $mode === "prod" ? $this->endpoint : $this->testEndpoint;
-
+        //error_log($config['base_uri']);
         if (!$this->client) {
             $this->client = new Client($config);
         }
@@ -80,8 +68,6 @@ class Request
         $this->secret_key = $secret_key;
         $this->mode = $mode;
         $this->config = $config;
-        $this->successUrl = $successUrl;
-        $this->errorUrl = $errorUrl;
     }
 
     /**
@@ -95,7 +81,7 @@ class Request
     {
         try {
             $key = $method === "GET" ? "query" : "form_params";
-            $url = $method === "GET" ? $this->endpoint . $path . "?" . http_build_query($content['query']) : $this->endpoint . $path;
+            $url = $method === "GET" ? $this->config['base_uri'] . $path . "?" . http_build_query($content['query']) : $this->config['base_uri'] . $path;
             $now = time();
 
             /**
@@ -116,7 +102,7 @@ class Request
 
             ksort($content[$key], SORT_NATURAL);
 
-            $body = json_encode($content[$key], JSON_NUMERIC_CHECK | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $body = $method === "GET" ? "" : http_build_query($content[$key]);
 
             $toSign = [$this->api_key, $this->secret_key, $this->consumer_key, $method, $url, $body, $now];
             $signature = $this->sign($toSign);
@@ -139,6 +125,7 @@ class Request
             //error_log(json_encode($options));
             $res = $this->client->request($method, $path, $options);
             $m = \GuzzleHttp\json_decode($res->getBody()->getContents());
+            //var_dump($m);
             return new Responder($m);
         } catch (GuzzleException $e) {
             error_log("[Request] : " . $e->getMessage());
@@ -154,7 +141,7 @@ class Request
         return $this->request('POST', $path, $params, $headers);
     }
 
-    public function get(string $path, array $content, ?array $headers = [])
+    public function get(string $path, array $content, ?array $headers = []): ?Responder
     {
         $params = [
             "query" => $content
@@ -198,8 +185,10 @@ class Request
             else
                 $toSign = '$1$' . $data;
 
+            error_log($toSign);
             $key = pack('H*', substr($this->secret_key, 0, 32));
             $iv = hex2bin(substr($this->consumer_key, 0, 32));
+
             $encrypted = openssl_encrypt(
                 $toSign,
                 "AES-128-CBC",
@@ -207,7 +196,6 @@ class Request
                 0,
                 $iv
             );
-
             return (string)$encrypted;
         } catch (Exception $err) {
             error_log("[ERROR] : encryption error");
